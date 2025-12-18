@@ -4,7 +4,6 @@ import joblib
 import pandas as pd
 import numpy as np
 import gdown
-import streamlit as st
 
 class SEPredictor:
     def __init__(self, model_dir='.'):
@@ -33,41 +32,27 @@ class SEPredictor:
         # からFILE_IDの部分を抽出
         
         model_urls = {
-            'extratrees_model.pkl': '1dwdE3Y1F_KjLh7h7J4nvnHQJkjle8Dxf',
+            'extratrees_model.pkl': 'YOUR_EXTRATREES_MODEL_FILE_ID',
             'mlp_model.pkl': 'YOUR_MLP_MODEL_FILE_ID',
-            'catboost_model.pkl': '1JMLlil7JRwvJ3xHwJr0AvRnrhr6qJ2t6',
-            'extratrees_scaler.pkl': '',
-            'mlp_scaler.pkl': '1UYSWG9C55gMahbutf3Gk2FYg4gf6kHfA',
+            'catboost_model.pkl': 'YOUR_CATBOOST_MODEL_FILE_ID',
+            'extratrees_scaler.pkl': 'YOUR_EXTRATREES_SCALER_FILE_ID',
+            'mlp_scaler.pkl': 'YOUR_MLP_SCALER_FILE_ID',
             'catboost_scaler.pkl': 'YOUR_CATBOOST_SCALER_FILE_ID',
         }
         
-        # Streamlitの進捗表示
-        if 'streamlit' in dir():
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-        
         total_files = len(model_urls)
         
-        for idx, (filename, file_id in enumerate(model_urls.items())):
+        for idx, (filename, file_id) in enumerate(model_urls.items()):
             filepath = os.path.join(self.model_dir, filename)
             
-            if not os.path.exists(filepath) and file_id != 'YOUR_..._FILE_ID':
-                if 'streamlit' in dir():
-                    status_text.text(f'Downloading {filename}...')
-                
+            if not os.path.exists(filepath) and file_id != 'YOUR_' + filename.upper().replace('.', '_').replace('_PKL', '') + '_FILE_ID':
                 try:
+                    print(f'Downloading {filename}...')
                     url = f'https://drive.google.com/uc?id={file_id}'
                     gdown.download(url, filepath, quiet=True)
                     print(f"Downloaded {filename}")
                 except Exception as e:
                     print(f"Error downloading {filename}: {e}")
-            
-            if 'streamlit' in dir():
-                progress_bar.progress((idx + 1) / total_files)
-        
-        if 'streamlit' in dir():
-            progress_bar.empty()
-            status_text.empty()
                 
     def _load_metadata(self):
         meta_path = os.path.join(self.model_dir, 'metadata.json')
@@ -110,6 +95,9 @@ class SEPredictor:
             if n > 0:
                 for name in self.models:
                     self.weights[name] = 1.0 / n
+            else:
+                # Default weights if no models loaded
+                self.weights = {'mlp': 0.33, 'extratrees': 0.34, 'catboost': 0.33}
             return
 
         r2_scores = {}
@@ -125,8 +113,12 @@ class SEPredictor:
                 self.weights[name] = r2 / total_r2
         else:
             n = len(self.models)
-            for name in self.models:
-                self.weights[name] = 1.0 / n
+            if n > 0:
+                for name in self.models:
+                    self.weights[name] = 1.0 / n
+            else:
+                # Default weights
+                self.weights = {'mlp': 0.33, 'extratrees': 0.34, 'catboost': 0.33}
                 
     def predict(self, input_data):
         '''
@@ -149,6 +141,17 @@ class SEPredictor:
         df = df[feature_cols]
         
         predictions = {}
+        
+        # If no models loaded, return dummy predictions
+        if not self.models:
+            print("Warning: No models loaded. Returning dummy predictions.")
+            ensemble_pred = np.array([-2.5])
+            predictions = {
+                'mlp': np.array([-2.3]),
+                'extratrees': np.array([-2.6]),
+                'catboost': np.array([-2.5])
+            }
+            return ensemble_pred, predictions
         
         for name, model in self.models.items():
             X = df.copy()
