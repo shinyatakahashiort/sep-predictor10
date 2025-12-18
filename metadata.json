@@ -1,0 +1,28 @@
+{
+    "creation_time": "2025-12-18T06:26:20.286020",
+    "feature_names": [
+        "年齢",
+        "性別",
+        "K",
+        "AL",
+        "LT",
+        "ACD"
+    ],
+    "target": "SE_p",
+    "models": {
+        "MLP": {
+            "model_path": "mlp_model.pkl",
+            "scaler_path": "mlp_scaler.pkl"
+        },
+        "ExtraTrees": {
+            "model_path": "extratrees_model.pkl",
+            "scaler_path": null
+        },
+        "CatBoost": {
+            "model_path": "catboost_model.pkl",
+            "scaler_path": null
+        }
+    },
+    "seed": 2025,
+    "note": "Models trained on full dataset"
+}
