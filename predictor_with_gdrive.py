@@ -33,11 +33,11 @@ class SEPredictor:
         # からFILE_IDの部分を抽出
         
         model_urls = {
-            'extratrees_model.pkl': 'YOUR_EXTRATREES_MODEL_FILE_ID',
+            'extratrees_model.pkl': '1dwdE3Y1F_KjLh7h7J4nvnHQJkjle8Dxf',
             'mlp_model.pkl': 'YOUR_MLP_MODEL_FILE_ID',
-            'catboost_model.pkl': 'YOUR_CATBOOST_MODEL_FILE_ID',
-            'extratrees_scaler.pkl': 'YOUR_EXTRATREES_SCALER_FILE_ID',
-            'mlp_scaler.pkl': 'YOUR_MLP_SCALER_FILE_ID',
+            'catboost_model.pkl': '1JMLlil7JRwvJ3xHwJr0AvRnrhr6qJ2t6',
+            'extratrees_scaler.pkl': '',
+            'mlp_scaler.pkl': '1UYSWG9C55gMahbutf3Gk2FYg4gf6kHfA',
             'catboost_scaler.pkl': 'YOUR_CATBOOST_SCALER_FILE_ID',
         }
         
