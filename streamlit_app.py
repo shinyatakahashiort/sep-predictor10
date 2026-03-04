@@ -3,34 +3,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 import seaborn as sns
-import subprocess
 from predictor import SEPredictor
-
-# 日本語フォント設定
-def _set_jp_font():
-    try:
-        result = subprocess.run(
-            ['fc-list', ':lang=ja', '--format=%{file}\n'],
-            capture_output=True, text=True, timeout=5
-        )
-        font_files = [f for f in result.stdout.strip().split('\n')
-                      if f and f.endswith(('.ttf', '.otf', '.ttc'))]
-        for f in font_files[:10]:
-            try:
-                fm.fontManager.addfont(f)
-            except Exception:
-                pass
-        jp_names = [font.name for font in fm.fontManager.ttflist
-                    if any(k in font.name for k in ('CJK', 'Gothic', 'Mincho', 'Noto', 'IPA'))]
-        if jp_names:
-            plt.rcParams['font.sans-serif'] = jp_names[:3] + list(plt.rcParams.get('font.sans-serif', []))
-            plt.rcParams['font.family'] = 'sans-serif'
-    except Exception:
-        pass
-
-_set_jp_font()
 
 # Page config
 st.set_page_config(
@@ -62,19 +36,19 @@ st.sidebar.header("患者データの入力")
 
 def user_input_features():
     age = st.sidebar.number_input("年齢 (歳)", min_value=0, max_value=20, value=7, step=1)
-    
+
     gender_label = st.sidebar.radio("性別", ("男性", "女性"))
     gender = 0 if gender_label == "女性" else 1 # Assuming 0=F, 1=M based on training
-    
+
     # Biometric parameters
     st.sidebar.markdown("### 生体計測値")
     # Based on training stats, K is around 7.72, likely radius in mm
     k_mm = st.sidebar.number_input("角膜曲率半径 K (mm)", min_value=6.0, max_value=10.0, value=7.72, step=0.01)
-    
+
     al = st.sidebar.number_input("眼軸長 AL (mm)", min_value=15.0, max_value=35.0, value=24.0, step=0.1)
     lt = st.sidebar.number_input("水晶体厚 LT (mm)", min_value=2.0, max_value=6.0, value=3.5, step=0.01)
     acd = st.sidebar.number_input("前房深度 ACD (mm)", min_value=1.5, max_value=6.0, value=3.75, step=0.01)
-    
+
     data = {
         '年齢': age,
         '性別': gender,
@@ -98,22 +72,22 @@ st.dataframe(display_df)
 # Prediction Button
 if st.button("予測を実行"):
     st.header("2. 予測結果")
-    
+
     with st.spinner('予測中...'):
         ensemble_pred, individual_preds = predictor.predict(input_data)
-        
+
     final_pred = ensemble_pred[0]
-    
+
     # Main Result
     st.success(f"### 予測 術後等価球面度数 (SE): {final_pred:.2f} D")
-    
+
     # Detailed Breakdown
     st.subheader("モデル別予測内訳")
     cols = st.columns(len(individual_preds))
     for i, (name, pred) in enumerate(individual_preds.items()):
         with cols[i]:
             st.metric(label=name, value=f"{pred[0]:.2f} D")
-            
+
     # Visualization
     st.subheader("アンサンブル予測の内訳")
 
@@ -129,31 +103,28 @@ if st.button("予測を実行"):
                                     gridspec_kw={'width_ratios': [3, 1]})
     fig.subplots_adjust(wspace=0.35)
 
-    # --- 左パネル: 各モデルの予測値 ---
+    # --- Left panel: individual predictions ---
     ax1.barh(model_labels, preds_values, color=colors, alpha=0.75, height=0.5)
 
-    # 予測値と重みのアノテーション
     x_min, x_max = ax1.get_xlim()
     span = x_max - x_min if x_max != x_min else 1
     for i, (label, pred, weight) in enumerate(zip(model_labels, preds_values, weight_values)):
         offset = span * 0.02
-        ha = 'left'
         x_pos = pred + offset
-        ax1.text(x_pos, i, f'{pred:.2f} D  (重み {weight:.0%})',
-                 va='center', ha=ha, fontsize=10, fontweight='bold')
+        ax1.text(x_pos, i, f'{pred:.2f} D  (weight {weight:.0%})',
+                 va='center', ha='left', fontsize=10, fontweight='bold')
 
-    # アンサンブル線
     ax1.axvline(x=final_pred, color='crimson', linestyle='--', linewidth=2.5,
-                label=f'アンサンブル: {final_pred:.2f} D', zorder=5)
-    ax1.set_xlabel('予測 SE (D)', fontsize=11)
-    ax1.set_title('各モデルの予測値とアンサンブル', fontsize=12, fontweight='bold')
+                label=f'Ensemble: {final_pred:.2f} D', zorder=5)
+    ax1.set_xlabel('Predicted SE (D)', fontsize=11)
+    ax1.set_title('Individual Model Predictions vs Ensemble', fontsize=12, fontweight='bold')
     ax1.legend(fontsize=11, loc='best')
     ax1.tick_params(axis='y', labelsize=11)
 
-    # --- 右パネル: 重みの内訳 (積み上げ横棒) ---
+    # --- Right panel: model weights ---
     left = 0
     for label, weight, color in zip(model_labels, weight_values, colors):
-        ax2.barh(['モデルの重み'], [weight], left=left, color=color,
+        ax2.barh(['Model Weights'], [weight], left=left, color=color,
                  alpha=0.85, label=label, height=0.4)
         if weight > 0.05:
             ax2.text(left + weight / 2, 0, f'{label}\n{weight:.0%}',
@@ -164,11 +135,11 @@ if st.button("予測を実行"):
     ax2.set_xlim(0, 1)
     ax2.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
     ax2.set_xticklabels(['0%', '25%', '50%', '75%', '100%'], fontsize=9)
-    ax2.set_title('モデルの重み', fontsize=12, fontweight='bold')
+    ax2.set_title('Model Weights', fontsize=12, fontweight='bold')
     ax2.tick_params(axis='y', labelleft=False)
 
     st.pyplot(fig)
-    
+
     # Interpretation Note
     st.info("""
     **注釈:**
