@@ -16,12 +16,16 @@ def _set_jp_font():
             capture_output=True, text=True, timeout=5
         )
         font_files = [f for f in result.stdout.strip().split('\n')
-                      if f and f.endswith(('.ttf', '.otf'))]
-        if font_files:
-            fm.fontManager.addfont(font_files[0])
-            prop = fm.FontProperties(fname=font_files[0])
-            font_name = prop.get_name()
-            plt.rcParams['font.sans-serif'] = [font_name] + plt.rcParams.get('font.sans-serif', [])
+                      if f and f.endswith(('.ttf', '.otf', '.ttc'))]
+        for f in font_files[:10]:
+            try:
+                fm.fontManager.addfont(f)
+            except Exception:
+                pass
+        jp_names = [font.name for font in fm.fontManager.ttflist
+                    if any(k in font.name for k in ('CJK', 'Gothic', 'Mincho', 'Noto', 'IPA'))]
+        if jp_names:
+            plt.rcParams['font.sans-serif'] = jp_names[:3] + list(plt.rcParams.get('font.sans-serif', []))
             plt.rcParams['font.family'] = 'sans-serif'
     except Exception:
         pass
