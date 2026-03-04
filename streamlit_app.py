@@ -20,7 +20,9 @@ def _set_jp_font():
         if font_files:
             fm.fontManager.addfont(font_files[0])
             prop = fm.FontProperties(fname=font_files[0])
-            plt.rcParams['font.family'] = prop.get_name()
+            font_name = prop.get_name()
+            plt.rcParams['font.sans-serif'] = [font_name] + plt.rcParams.get('font.sans-serif', [])
+            plt.rcParams['font.family'] = 'sans-serif'
     except Exception:
         pass
 
