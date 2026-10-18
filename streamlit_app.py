@@ -34,9 +34,9 @@ except Exception as e:
     st.stop()
 
 # Title and Description
-st.title("👁️ 小児の術後屈折予測 AI")
+st.title("👁️ 小児の調節麻痺下屈折予測 AI")
 st.markdown("""
-このアプリケーションは、小児白内障手術後の屈折値（SE: Spherical Equivalent）を予測するAIツールです。
+このアプリケーションは、眼軸長などの生体計測値から、シクロペントラート塩酸塩点眼後（調節麻痺下）の他覚的屈折値（SE: Spherical Equivalent）を予測するAIツールです。
 **MLP**, **ExtraTrees**, **CatBoost** の3つの機械学習モデルのアンサンブルにより、高精度な予測を提供します。
 """)
 
@@ -100,7 +100,7 @@ if st.button("予測を実行", disabled=not agreed):
     final_pred = ensemble_pred[0]
 
     # Main Result
-    st.success(f"### 予測 術後等価球面度数 (SE): {final_pred:.2f} D")
+    st.success(f"### 予測 調節麻痺下 等価球面度数 (SE): {final_pred:.2f} D")
     st.caption("※ この値は統計モデルによる参考値です。診療上の判断は医師が行ってください。")
 
     # Detailed Breakdown
@@ -165,7 +165,7 @@ if st.button("予測を実行", disabled=not agreed):
     # Interpretation Note
     st.info("""
     **注釈:**
-    * 予測値は術後の屈折誤差の目安です。
+    * 予測値はシクロペントラート塩酸塩点眼後の他覚的屈折値（等価球面度数）の目安です。
     * 機械学習モデルは過去のデータセットに基づいて予測を行っています。
     * **CatBoost, MLP, ExtraTrees** の加重平均を使用しています。
     """)
