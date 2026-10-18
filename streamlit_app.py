@@ -6,6 +6,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from predictor import SEPredictor
 
+DISCLAIMER_TEXT = """
+1. 本アプリケーションは研究目的で開発した参考情報の提供ツールであり、医療機器（プログラム医療機器を含む）としての承認・認証等は受けていません。
+2. 本アプリケーションの予測結果は、診断・治療方針の決定を目的とするものではありません。診療に関する判断は、必ず医師が他の検査結果や臨床所見と合わせて総合的に行ってください。
+3. 予測値は、過去の限られたデータに基づく統計モデルによる推定値であり、誤差を含みます。個々の患者における結果を保証するものではありません。また、学習データの範囲外の値を入力した場合の精度は保証されません。
+4. 本アプリケーションの利用、または利用できなかったことにより生じたいかなる損害（直接・間接を問わず）についても、開発者は一切の責任を負いません。
+5. 本アプリケーションの内容は、予告なく変更・公開停止することがあります。
+6. 患者の氏名・ID など、個人を特定できる情報は入力しないでください。
+"""
+
 # Page config
 st.set_page_config(
     page_title="小児屈折予測 AI",
@@ -30,6 +39,16 @@ st.markdown("""
 このアプリケーションは、小児白内障手術後の屈折値（SE: Spherical Equivalent）を予測するAIツールです。
 **MLP**, **ExtraTrees**, **CatBoost** の3つの機械学習モデルのアンサンブルにより、高精度な予測を提供します。
 """)
+
+# Disclaimer
+st.warning(
+    "⚠️ **本アプリケーションは研究用の参考ツールであり、医療機器ではありません**。"
+    "予測結果は診断・治療の根拠とせず、最終的な判断は必ず医師が行ってください。"
+    "本アプリケーションの利用により生じたいかなる損害についても、開発者は責任を負いません。"
+)
+with st.expander("免責事項（ご利用前に必ずお読みください）"):
+    st.markdown(DISCLAIMER_TEXT)
+agreed = st.checkbox("上記の免責事項を読み、内容に同意します")
 
 # Sidebar for Inputs
 st.sidebar.header("患者データの入力")
@@ -70,7 +89,9 @@ display_df['性別'] = display_df['性別'].map({0: '女性', 1: '男性'})
 st.dataframe(display_df)
 
 # Prediction Button
-if st.button("予測を実行"):
+if not agreed:
+    st.caption("予測を実行するには、免責事項への同意が必要です。")
+if st.button("予測を実行", disabled=not agreed):
     st.header("2. 予測結果")
 
     with st.spinner('予測中...'):
@@ -80,6 +101,7 @@ if st.button("予測を実行"):
 
     # Main Result
     st.success(f"### 予測 術後等価球面度数 (SE): {final_pred:.2f} D")
+    st.caption("※ この値は統計モデルによる参考値です。診療上の判断は医師が行ってください。")
 
     # Detailed Breakdown
     st.subheader("モデル別予測内訳")
@@ -150,4 +172,8 @@ if st.button("予測を実行"):
 
 # Footer
 st.markdown("---")
+st.caption(
+    "本アプリケーションは研究用の参考ツールであり、医療機器ではありません。"
+    "利用により生じたいかなる損害についても、開発者は責任を負いません。"
+)
 st.markdown("Developed with Streamlit and Python.")
